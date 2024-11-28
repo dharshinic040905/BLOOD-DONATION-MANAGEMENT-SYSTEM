@@ -1,0 +1,268 @@
+package blood_donation;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+// Donor class to hold donor information
+class Donor {
+    String name;
+    String email;
+    String healthCondition;
+    ArrayList<String> donationHistory;
+
+    public Donor(String name, String email, String healthCondition) {
+        this.name = name;
+        this.email = email;
+        this.healthCondition = healthCondition;
+        this.donationHistory = new ArrayList<>();
+    }
+
+    public void addDonation(String date) {
+        donationHistory.add(date);
+    }
+
+    public ArrayList<String> getDonationHistory() {
+        return donationHistory;
+    }
+
+    public String getHealthCondition() {
+        return healthCondition;
+    }
+}
+
+// BloodGroup class to manage blood inventory for different blood types
+class BloodGroup {
+    private String groupName;
+    private int inventory;
+
+    public BloodGroup(String groupName) {
+        this.groupName = groupName;
+        this.inventory = 0; // Initial blood inventory
+    }
+
+    public void addBlood(int amount) {
+        inventory += amount;
+    }
+
+    public void removeBlood(int amount) {
+        if (amount <= inventory) {
+            inventory -= amount;
+        } else {
+            System.out.println("Not enough blood in inventory for " + groupName);
+        }
+    }
+
+    public int getInventory() {
+        return inventory;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+}
+
+// BloodBank class to manage all blood groups
+class BloodBank {
+    private HashMap<String, BloodGroup> bloodGroups;
+
+    public BloodBank() {
+        bloodGroups = new HashMap<>();
+        String[] groupNames = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
+        for (String groupName : groupNames) {
+            bloodGroups.put(groupName, new BloodGroup(groupName));
+        }
+    }
+
+    public void addBlood(String groupName, int amount) {
+        if (bloodGroups.containsKey(groupName)) {
+            bloodGroups.get(groupName).addBlood(amount);
+        } else {
+            System.out.println("Invalid blood group: " + groupName);
+        }
+    }
+
+    public void removeBlood(String groupName, int amount) {
+        if (bloodGroups.containsKey(groupName)) {
+            bloodGroups.get(groupName).removeBlood(amount);
+        } else {
+            System.out.println("Invalid blood group: " + groupName);
+        }
+    }
+
+    public int getBloodInventory(String groupName) {
+        if (bloodGroups.containsKey(groupName)) {
+            return bloodGroups.get(groupName).getInventory();
+        }
+        return 0;
+    }
+
+    public String getAllInventory() {
+        StringBuilder inventoryList = new StringBuilder();
+        for (BloodGroup group : bloodGroups.values()) {
+            inventoryList.append(group.getGroupName()).append(": ").append(group.getInventory()).append(" units\n");
+        }
+        return inventoryList.toString();
+    }
+}
+
+// Main application class
+public class BloodDonationManagementSystem extends JFrame {
+    private ArrayList<Donor> donors = new ArrayList<>();
+    private BloodBank bloodBank = new BloodBank();
+    private JTextField nameField, emailField, healthField, dateField, bloodGroupField;
+
+    public BloodDonationManagementSystem() {
+        setTitle("Blood Donation Management System");
+        setSize(500, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Main panel
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+
+        // Buttons for donor and admin
+        JButton donorButton = new JButton("Donor Portal");
+        donorButton.addActionListener(e -> showDonorPortal());
+
+        JButton adminButton = new JButton("Admin Portal");
+        adminButton.addActionListener(e -> showAdminPortal());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(donorButton);
+        buttonPanel.add(adminButton);
+
+        mainPanel.add(buttonPanel, BorderLayout.CENTER);
+        add(mainPanel);
+    }
+
+    private void showDonorPortal() {
+        JFrame donorFrame = new JFrame("Donor Portal");
+        donorFrame.setSize(500, 300);
+        donorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        donorFrame.setLocationRelativeTo(this);
+
+        // Donor registration panel
+        JPanel donorPanel = new JPanel();
+        donorPanel.setLayout (new GridLayout(6, 2));
+
+        donorPanel.add(new JLabel("Name:"));
+        nameField = new JTextField();
+        donorPanel.add(nameField);
+
+        donorPanel.add(new JLabel("Email:"));
+        emailField = new JTextField();
+        donorPanel.add(emailField);
+
+        donorPanel.add(new JLabel("Health Condition:"));
+        healthField = new JTextField();
+        donorPanel.add(healthField);
+
+        donorPanel.add(new JLabel("Blood Group:"));
+        bloodGroupField = new JTextField();
+        donorPanel.add(bloodGroupField);
+
+        JButton registerButton = new JButton("Register");
+        registerButton.addActionListener(e -> registerDonor());
+
+        JButton viewHistoryButton = new JButton("View Donation History");
+        viewHistoryButton.addActionListener(e -> viewDonationHistory());
+
+        JButton scheduleDonationButton = new JButton("Schedule Donation");
+        scheduleDonationButton.addActionListener(e -> scheduleDonation());
+
+        donorPanel.add(registerButton);
+        donorPanel.add(viewHistoryButton);
+        donorPanel.add(scheduleDonationButton);
+
+        donorFrame.add(donorPanel);
+        donorFrame.setVisible(true);
+    }
+
+    private void registerDonor() {
+        String name = nameField.getText();
+        String email = emailField.getText();
+        String healthCondition = healthField.getText();
+        String bloodGroup = bloodGroupField.getText();
+        if (!name.isEmpty() && !email.isEmpty() && !healthCondition.isEmpty() && !bloodGroup.isEmpty()) {
+            donors.add(new Donor(name, email, healthCondition));
+            JOptionPane.showMessageDialog(this, "Donor Registered: " + name);
+            nameField.setText("");
+            emailField.setText("");
+            healthField.setText("");
+            bloodGroupField.setText("");
+        } else {
+            JOptionPane.showMessageDialog(this, "Please fill all fields.");
+        }
+    }
+
+    private void viewDonationHistory() {
+        StringBuilder history = new StringBuilder();
+        for (Donor donor : donors) {
+            history.append("Name: ").append(donor.name).append("\n");
+            history.append("Donations: ").append(donor.getDonationHistory()).append("\n\n");
+        }
+        JOptionPane.showMessageDialog(this, history.toString());
+    }
+
+    private void scheduleDonation() {
+        String date = JOptionPane.showInputDialog(this, "Enter donation date (e.g., YYYY-MM-DD):");
+        if (date != null && !date.isEmpty()) {
+            for (Donor donor : donors) {
+                donor.addDonation(date);
+            }
+            JOptionPane.showMessageDialog(this, "Donation scheduled for all registered donors.");
+        } else {
+            JOptionPane.showMessageDialog(this, "Please enter a valid date.");
+        }
+    }
+
+    private void showAdminPortal() {
+        JFrame adminFrame = new JFrame("Admin Portal");
+        adminFrame.setSize(500, 300);
+        adminFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        adminFrame.setLocationRelativeTo(this);
+
+        // Admin panel
+        JPanel adminPanel = new JPanel();
+        adminPanel.setLayout(new GridLayout(5, 2));
+
+        adminPanel.add(new JLabel("Blood Group:"));
+        JTextField bloodGroupField = new JTextField();
+        adminPanel.add(bloodGroupField);
+
+        adminPanel.add(new JLabel("Blood Amount to Add:"));
+        JTextField addBloodField = new JTextField();
+        adminPanel.add(addBloodField);
+
+        JButton addBloodButton = new JButton("Add Blood");
+        addBloodButton.addActionListener(e -> {
+            String groupName = bloodGroupField.getText();
+            int amount = Integer.parseInt(addBloodField.getText());
+            bloodBank.addBlood(groupName, amount);
+            JOptionPane.showMessageDialog(this, "Added " + amount + " units of blood to " + groupName);
+            addBloodField.setText("");
+            bloodGroupField.setText("");
+        });
+
+        adminPanel.add(addBloodButton);
+
+        adminPanel.add(new JLabel("Current Blood Inventory:"));
+        JButton viewInventoryButton = new JButton("View Inventory");
+        viewInventoryButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, bloodBank.getAllInventory());
+        });
+
+        adminPanel.add(viewInventoryButton);
+
+        adminFrame.add(adminPanel);
+        adminFrame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new BloodDonationManagementSystem().setVisible(true));
+    }
+}
